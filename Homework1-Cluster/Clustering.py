@@ -5,14 +5,26 @@
 """
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import *
+from sklearn.mixture import GaussianMixture
 from sklearn import metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
-from time import time
 import numpy as np
+from time import time
 
 # #############################################################################
 print("Loading 20 newsgroups dataset for categories:")
-
+# Load some categories from the training set
+# 从训练集中加载一些类别
+categories = [
+    'alt.atheism',
+    'talk.religion.misc',
+    'comp.graphics',
+    'sci.space',
+    'rec.autos'
+]
+# Uncomment the following to do the analysis on all the categories
+# 取消下面的注释，以便对所有类别进行分析
+# categories = None
 '''
 fetch_20newsgroups(data_home=None, # 文件下载的路径
                    subset='train', # 加载那一部分数据集 train/test
@@ -25,7 +37,7 @@ fetch_20newsgroups(data_home=None, # 文件下载的路径
 '''
 # 加载数据集
 dataset = fetch_20newsgroups(subset='all',      # 加载哪一部分数据集 train/test
-                             categories=None,   # 选取哪一类数据集[类别列表]，默认20类
+                             categories=categories,   # 选取哪一类数据集[类别列表]，默认20类
                              shuffle=True,      # 将数据集随机排序
                              random_state=42,   # 随机数生成器
                              )
@@ -85,31 +97,82 @@ print()
 # 使用Homogeneity、completeness、NMI指标进行聚类分析评估
 
 print("Clustering sparse data with KMeans")
+t0 = time()
 km = KMeans(n_clusters=true_k,  # 形成的簇数以及生成的中心数
              init='k-means++',   # 用智能的方式选择初始聚类中心以加速收敛
              max_iter=100,       # 一次单独运行的最大迭代次数
              n_init=1            # 随机初始化的次数
-             )
-t0 = time()
-km.fit(X)
+             ).fit(X)
 print("done in %0.3fs" % (time() - t0))
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
 print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
 print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, km.labels_))
 print()
 
-
-print("Clustering sparse data with MiniBatchKMeans")
-km2 = MiniBatchKMeans(n_clusters=true_k,  # 形成的簇数以及生成的中心数
-                      init='k-means++',   # 用智能的方式选择初始聚类中心以加速收敛
-                      n_init=1,           # 随机初始化的次数
-                      init_size=1000,
-                      batch_size=1000     # Size of the mini batches
-                      )
+print("Clustering sparse data with AffinityPropagation")
 t0 = time()
-km2.fit(X)
+ap = AffinityPropagation(damping=0.5, preference=None).fit(X)
 print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km2.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, km2.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, km2.labels_))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ap.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, ap.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ap.labels_))
+print()
+
+print("Clustering sparse data with Mean-Shift")
+t0 = time()
+ms = MeanShift(bandwidth=0.9, bin_seeding=True)
+X_array = X.toarray()
+ms.fit(X_array)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ms.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, ms.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ms.labels_))
+print()
+
+print("Clustering sparse data with SpectralClustering")
+t0 = time()
+sc = SpectralClustering(n_clusters=true_k).fit(X)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ms.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, ms.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ms.labels_))
+print()
+
+print('Clustering sparse data with Ward hierachical clustering')
+t0 = time()
+ward = AgglomerativeClustering(n_clusters=true_k, linkage='ward').fit(X_array)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ward.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, ward.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ward.labels_))
+print()
+
+print('Clustering sparse data with Agglomerative Clustering')
+t0 = time()
+ac = AgglomerativeClustering(n_clusters=true_k, linkage='complete').fit(X_array)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ac.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, ac.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ac.labels_))
+print()
+
+
+print('Clustering sparse data with DBSCAN')
+t0 = time()
+dbscan = DBSCAN(min_samples=1,metric='cosine').fit(X)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, dbscan.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, dbscan.labels_))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, dbscan.labels_))
+print()
+
+
+
+print('Clustering sparse data with Gaussian Mixture')
+t0 = time()
+gm = GaussianMixture(n_components=50).fit(X_array)
+print("done in %0.3fs" % (time() - t0))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, gm.predict(X_array)))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, gm.predict(X_array)))
+print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, gm.predict(X_array)))
 print()
