@@ -1,4 +1,7 @@
-# Homework1 实验报告 #
+# Homework1 实验报告-Clustering with sklearn #
+姓名：黄巧 
+
+学号：201934715
 
 ----------
 
@@ -13,7 +16,7 @@
 
 ![](https://i.imgur.com/VvMWpvb.png)
 
-2、使用NMI(Normalized Mutual Information),Homogeneity,Completeness作为评价指标，评估以上聚类算法的聚类效果。
+2、使用Homogeneity,Completeness，NMI(Normalized Mutual Information)作为评价指标，评估以上聚类算法的聚类效果。
 ## 实验过程
 ### （一）数据预处理
 1、fetch_20newsgroups数据集包括18846篇新闻文章，一共涉及到20种话题。sklearn提供了该数据的接口：sklearn.datasets.fetch_20newsgroups，首先加载数据集，选取categories=['alt.atheism','talk.religion.misc','comp.graphics','sci.space','rec.autos']的类别进行聚类分析，使用TfidfVectorizer方法进行文本向量化与TF-IDF预处理，得到一个[n_samples,n_features]维度的稀疏矩阵。
@@ -78,8 +81,10 @@ print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
 print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, km.labels_))
 ```
 ## 实验结果
+1、在fetch20newsgroups数据集上八种聚类算法的效果评估如下表所示：
 
 ![运行结果数据对比](https://i.imgur.com/FBdNIQ2.png)
+运行结果截图为：
 ![运行结果1](https://i.imgur.com/iwZvLY7.png)
 ![运行结果2](https://i.imgur.com/WDHBSK2.png)
 ![运行结果3](https://i.imgur.com/2AwDa6U.png)
