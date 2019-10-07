@@ -85,7 +85,10 @@ print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_i
 
 ![运行结果数据对比](https://i.imgur.com/FBdNIQ2.png)
 运行结果截图为：
+
 ![运行结果1](https://i.imgur.com/iwZvLY7.png)
+
 ![运行结果2](https://i.imgur.com/WDHBSK2.png)
+
 ![运行结果3](https://i.imgur.com/2AwDa6U.png)
 
