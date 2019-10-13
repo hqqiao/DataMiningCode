@@ -47,7 +47,6 @@ print()
 
 labels = dataset.target              # 原始数据标签类别
 true_k = np.unique(labels).shape[0]  # 种类数
-
 '''
 
 机器学习中，我们总是要先将源数据处理成符合模型算法输入的形式，比如将文字、声音、图像转化成矩阵。
@@ -88,91 +87,69 @@ vectorizer = TfidfVectorizer(max_df=0.5,            # 词汇表中过滤掉df>(0
 X = vectorizer.fit_transform(dataset.data)          # 稀疏矩阵
 
 print("done in %fs" % (time() - t0))
-print("n_samples: %d, n_features: %d" % X.shape)
-print()
+
+n_samples, n_features = X.shape
+labels = dataset.target              # 原始数据标签类别
+n_digits = np.unique(labels).shape[0]  # 种类数
+
+print("n_digits: %d, \t n_samples %d, \t n_features %d"
+      % (n_digits, n_samples, n_features))
+
+# 输出分隔符以及列表表头
+print(82 * '_')
+print('init\t\t\t\t\t\t\t\ttime\t\tHomogeneity\t\tCompleteness\tNMI')
 
 # #############################################################################
 # Do the actual clustering
 # Evaluation—Homogeneity、Completeness、Normalized Mutual Information(NMI)
 # 使用Homogeneity、completeness、NMI指标进行聚类分析评估
 
-print("Clustering sparse data with KMeans")
-t0 = time()
-km = KMeans(n_clusters=true_k,  # 形成的簇数以及生成的中心数
-             init='k-means++',   # 用智能的方式选择初始聚类中心以加速收敛
-             max_iter=100,       # 一次单独运行的最大迭代次数
-             n_init=1            # 随机初始化的次数
-             ).fit(X)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, km.labels_))
-print()
 
-print("Clustering sparse data with AffinityPropagation")
-t0 = time()
-ap = AffinityPropagation(damping=0.5, preference=None).fit(X)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ap.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, ap.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ap.labels_))
-print()
+def bench_k_means(estimator, name, data):
+    t0 = time()
+    estimator.fit(data)
+    print('%-30s\t\t%.2fs\t\t%.3f\t\t\t%.3f\t\t\t%.3f'
+          % (name,
+             (time() - t0),
+             metrics.homogeneity_score(labels, estimator.labels_),
+             metrics.completeness_score(labels, estimator.labels_),
+             metrics.normalized_mutual_info_score(labels, estimator.labels_)))
 
-print("Clustering sparse data with Mean-Shift")
-t0 = time()
-ms = MeanShift(bandwidth=0.9, bin_seeding=True)
-X_array = X.toarray()
-ms.fit(X_array)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ms.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, ms.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ms.labels_))
-print()
-
-print("Clustering sparse data with SpectralClustering")
-t0 = time()
-sc = SpectralClustering(n_clusters=true_k).fit(X)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ms.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, ms.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ms.labels_))
-print()
-
-print('Clustering sparse data with Ward hierachical clustering')
-t0 = time()
-ward = AgglomerativeClustering(n_clusters=true_k, linkage='ward').fit(X_array)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ward.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, ward.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ward.labels_))
-print()
-
-print('Clustering sparse data with Agglomerative Clustering')
-t0 = time()
-ac = AgglomerativeClustering(n_clusters=true_k, linkage='complete').fit(X_array)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, ac.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, ac.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, ac.labels_))
-print()
+def bench_GaussianMixture(name, data):
+    t0 = time()
+    gm = GaussianMixture(n_components=50).fit(data)
+    print('%-30s\t\t%.2fs\t\t%.3f\t\t\t%.3f\t\t\t%.3f'
+          % (name,
+             (time() - t0),
+             metrics.homogeneity_score(labels, gm.predict(data)),
+             metrics.completeness_score(labels, gm.predict(data)),
+             metrics.normalized_mutual_info_score(labels, gm.predict(data))))
 
 
-print('Clustering sparse data with DBSCAN')
-t0 = time()
-dbscan = DBSCAN(min_samples=1,metric='cosine').fit(X)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, dbscan.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, dbscan.labels_))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, dbscan.labels_))
-print()
+bench_k_means(KMeans
+              (n_clusters=true_k,  # 形成的簇数以及生成的中心数
+                init='k-means++',   # 用智能的方式选择初始聚类中心以加速收敛
+                max_iter=100,       # 一次单独运行的最大迭代次数
+                n_init=1            # 随机初始化的次数
+                ),
+              name="k-means++", data=X)
 
+bench_k_means(AffinityPropagation(damping=0.5, preference=None),
+              name="AffinityPropagation", data=X)
 
+bench_k_means(MeanShift(bandwidth=0.9, bin_seeding=True),
+              name="MeanShift", data=X.toarray())
 
-print('Clustering sparse data with Gaussian Mixture')
-t0 = time()
-gm = GaussianMixture(n_components=50).fit(X_array)
-print("done in %0.3fs" % (time() - t0))
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, gm.predict(X_array)))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, gm.predict(X_array)))
-print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_info_score(labels, gm.predict(X_array)))
-print()
+bench_k_means(SpectralClustering(n_clusters=n_digits),
+              name="SpectralClustering", data=X)
+
+bench_k_means(AgglomerativeClustering(n_clusters=n_digits, linkage='ward'),
+              name="Ward hierachical clustering", data=X.toarray())
+
+bench_k_means(AgglomerativeClustering(n_clusters=n_digits, linkage='complete'),
+              name="AgglomerativeClustering", data=X.toarray())
+
+bench_k_means(DBSCAN(min_samples=1,metric='cosine'),
+              name="DBSCAN", data=X)
+
+bench_GaussianMixture(name="GaussianMixture", data=X.toarray())

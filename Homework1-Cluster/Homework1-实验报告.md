@@ -10,7 +10,7 @@
 
 2、调用sklearn模块中的聚类函数以及评估函数对数据集进行聚类分析和效果评价。
 ## 实验环境
- windows10，python3.5，scikit-learn0.21.2
+ windows10，python3.5，scikit-learn0.19.0
 ## 实验内容
 1、测试sklearn中以下聚类算法在sklearn.datasets.load_digits，sklearn.datasets.fetch_20newsgroups两个数据集上的聚类效果。
 
@@ -19,7 +19,7 @@
 2、使用Homogeneity,Completeness，NMI(Normalized Mutual Information)作为评价指标，评估以上聚类算法的聚类效果。
 ## 实验过程
 ### （一）数据预处理
-1、fetch_20newsgroups数据集包括18846篇新闻文章，一共涉及到20种话题。sklearn提供了该数据的接口：sklearn.datasets.fetch_20newsgroups，首先加载数据集，选取categories=['alt.atheism','talk.religion.misc','comp.graphics','sci.space','rec.autos']的类别进行聚类分析，使用TfidfVectorizer方法进行文本向量化与TF-IDF预处理，得到一个[n_samples,n_features]维度的稀疏矩阵。
+1、fetch_20newsgroups数据集包括18846篇新闻文章，一共涉及到20种话题，这些文档在20 个不同的新闻组中几乎均匀分布。sklearn提供了该数据的接口：sklearn.datasets.fetch_20newsgroups。首先加载数据集，选取categories=['alt.atheism','talk.religion.misc','comp.graphics','sci.space','rec.autos']的类别进行聚类分析，使用TfidfVectorizer方法进行文本向量化与TF-IDF预处理，得到一个[n_samples,n_features]维度的稀疏矩阵。
 
 ```
 vectorizer = TfidfVectorizer(max_df=0.5,            # 词汇表中过滤掉df>(0.5*doc_num)的单词
@@ -32,7 +32,15 @@ X = vectorizer.fit_transform(dataset.data)          # 稀疏矩阵
 
 执行结果如下图所示：
 
-![](https://i.imgur.com/FBH5ma9.png)
+![加载数据集](https://i.imgur.com/lZHnWC7.png)
+
+2、load_digits数据集包括有1797个样本，每个样本包括8*8像素的图像和一个[0,9]整数的标签。
+
+![digits数据集](https://i.imgur.com/a8x42FZ.png)
+
+images是一个1797*8*8的三维矩阵，即有1797张8*8的数字图片组成。
+
+![digits手写字图片](https://i.imgur.com/vU1ZyDt.png)
 
 ### （二）聚类算法调用与评估
 1、分别调用 sklearn 中的八种聚类算法对 fetch_20newsgroups 数据进行聚类分析，算法的关键函数如下：
@@ -93,7 +101,7 @@ ms.fit(X_array)
 
 (4) Spectral clustering
 
-SpectralClustering 是在样本之间进行亲和力矩阵的低维度嵌入，其实是低维空间中的KMeans。如果亲和度矩阵稀疏，则这是非常有效的并且 SpectralClustering 需要指定聚类数。这个算法适用于聚类数少时，在聚类数多时不建议使用。
+SpectralClustering 是在样本之间进行亲和力矩阵的低维度嵌入，其实是低维空间中的KMeans。如果亲和度矩阵稀疏，则这是非常有效的并且 SpectralClustering 需要指定聚类数。这个算法适用于聚类数少时，在聚类数多时不建议使用。它使用最近邻图来计算数据的高维表示，然后用k-means算法分配标签。
 
 `sc = SpectralClustering(n_clusters=true_k).fit(X)`
 
@@ -115,7 +123,7 @@ Ward 方法是一种质心算法。质心方法通过计算集群的质心之间
 
 `ward = AgglomerativeClustering(n_clusters=true_k, linkage='ward').fit(X_array)`
 
-(6) Aggiomerative clustering
+(6) Agglomerative clustering
 
 凝聚聚类对象使用自底向上的方法执行层次聚类:每个观察从其自己的集群中开始，集群依次合并在一起。链接标准决定了用于合并策略的度量:
 
@@ -188,17 +196,66 @@ print("Normalized Mutual Information (NMI): %0.3f" % metrics.normalized_mutual_i
 
 - 基于互信息的度量方式，由于需要正确聚类标签，在实践中几乎不可用，但是可以用来在无监督的环境下，比较各种聚类算法结果的一致性（基于互信息的三种度量方式是对称的）；
 
-## 实验结果
-1、在fetch20newsgroups数据集上八种聚类算法的效果评估如下表所示：
+## 实验结果与分析
+1、在fetch20newsgroups数据集上八种聚类算法的效果评估如下图所示：
 
-其中Aggiomerative clustering 算法三项评估指标均低于0.1，而Gaussian mixtures的运行时间高达380s，整体运行效果较差。Affinity propagation 和 DBSCAN 算法运行效果相对较好，其中DBSCAN算法运行时间也相对较少，表现最好。
+![新闻数据集运行结果及数据对比](https://i.imgur.com/Sy376B8.png)
 
-![运行结果数据对比](https://i.imgur.com/FBdNIQ2.png)
-运行结果截图为：
+效果评估图中用红色标注了效果最好的指标值，橙色次之；用蓝色标注了效果最差的指标值，绿色次之。
 
-![运行结果1](https://i.imgur.com/iwZvLY7.png)
+- 从运行时间指标看，DBSCAN算法运行时间仅1.37s最快，K-means算法2.57s以及Spectral clustering算法5.53s略慢一些，而 Gaussian mixtures 高达465.87s非常慢，效率较低。
+- 从Homogeneity指标看，DBSCAN算法0.855表现最好，AffinityPropagation算法0.829也较好；而Agglomerative clustering算法0.014、Spectral clustering算法0.089均未超过0.02，表现最差；其他几个算法集中在0.5左右较为一般。
+- 从Completeness指标看，K-means算法0.621表现最好，其次是Ward hierarchical clustering算法0.470次之；而Agglomerative clustering算法0.016表现最差；其他几个算法集中在0.2/0.3左右，较为一般。
+- 从NMI指标看，K-means算法0.585表现最好，DBSCAN算法0.437次之；Agglomerative clustering算法0.015表现最差，Spectral clustering算法也相对较差；其他几个算法集中在0.32~0.41之间，表现较为一般。
 
-![运行结果2](https://i.imgur.com/WDHBSK2.png)
+三项指标综合来看：
 
-![运行结果3](https://i.imgur.com/2AwDa6U.png)
+Aggiomerative clustering 算法三项评估指标均低于0.02，运行时间也在70s以上，整体效果最差；
+
+Gaussian mixtures的运行时间高达465s，各个指标值也相对一般，整体运行效果相对较差；
+
+Affinity propagation 和 DBSCAN 算法运行效果相对较好，其中DBSCAN算法运行时间也相对较少，表现最好。
+
+2、在digits数据集上八种聚类算法的效果评估如下图所示：
+
+![digits数据集运行结果以及数据对比](https://i.imgur.com/vclAXxb.png)
+
+其中K-means算法使用PCA降维后绘制的聚类图示如下：
+
+![digits数据集K-means降维聚类图示](https://i.imgur.com/hwtuDvr.png)
+
+效果评估图中用红色标注了效果最好的指标值，橙色次之；用蓝色标注了效果最差的指标值，绿色次之。
+
+- 从运行时间指标看，DBSCAN算法运行时间仅0.05s最快，Spectral clustering算法418s最慢，AffinityPropagation算法4.71s相对较慢，其他算法都在0.1-1s之间，从运行时间角度相对较好。
+- 从Homogeneity指标看，MeanShift算法可以达到1.0表现最好，AffinityPropagation算法0.932也较好；而DBSCAN算法仅有0.001表现最差，Agglomerative clustering算法0.017、Spectral clustering算法0.019均未超过0.02，表现也较差；其他几个算法集中在0.7左右相对较好。
+- 从Completeness指标看，Ward hierarchical clustering算法0.836表现最好，K-means算法0.650表现次之；而Agglomerative clustering算法0.249表现最差，DBSCAN以及Spectral clustering算法也都处于0.3以下整体较差；其他几个算法集中在0.5左右，相对一般。
+- 从NMI指标看，Ward hierarchical clustering算法0.797表现最好，GaussianMixture算法0.689次之；DBSCAN算法仅有0.017表现最差，Agglomerative clustering算法0.065以及Spectral clustering算法0.076也相对较差；其他几个算法集中在0.6左右，相对较好。
+
+三项指标综合来看：
+
+SpectralClustering算法三项评估指标均较差且运行时间极长，整体效果最差；
+
+DBSCAN算法和Aggiomerative clustering 算法三项评估指标也均较差，效果也很不好；
+
+Gaussian mixtures算法、Ward hierarchical clustering算法以及AffinityPropagation算法在三项指标的综合表现最好；
+
+MeanShift算法在Homogeneity表现极佳但在Completeness以及NMI指标上不是很出色；
+
+K-means算法三项指标都在0.6左右比较平均。
+
+3、
+
+综合两个数据集运行结果来看：
+
+在Homogeneity方面：
+
+AffinityPropagation算法在两个数据集上表现均较好，都能达到0.9左右；而Agglomerative clustering算法以及Spectral clustering算法在两个数据集上表现都比较差，均未超过0.02，这两个算法在同质性方面效果较差。
+
+在Completeness方面：
+
+K-means算法以及Ward hierarchical clustering算法在两个数据集上表现均较好；而Agglomerative clustering算法一直表现较差。
+
+在NMI方面：
+
+Agglomerative clustering算法一直表现较差，其他算法各有波动。
 
