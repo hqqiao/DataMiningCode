@@ -1,0 +1,45 @@
+.game-over-modal {
+  .ant-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: none;
+    
+    .ant-modal-title {
+      color: white;
+      text-align: center;
+      font-weight: bold;
+    }
+  }
+  
+  .ant-modal-body {
+    padding: 24px;
+  }
+}
+
+.result-content {
+  text-align: center;
+  
+  .new-record-badge {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #faad14 0%, #f5222d 100%);
+    color: white;
+    border-radius: 20px;
+    display: inline-block;
+    font-weight: bold;
+    animation: bounce 0.6s infinite alternate;
+  }
+}
+
+.modal-actions {
+  margin-top: 24px;
+  text-align: center;
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-3px);
+  }
+}
